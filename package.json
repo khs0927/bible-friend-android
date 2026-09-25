@@ -23,7 +23,9 @@
     "functions:check": "deno check --config supabase/functions/deno.json supabase/functions/*/index.ts",
     "format": "prettier --write .",
     "smoke": "node scripts/smoke-local.mjs",
-    "db:test": "supabase test db"
+    "db:test": "supabase test db",
+    "android:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/android-setup.ps1",
+    "android:dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/android-dev.ps1"
   },
   "devDependencies": {
     "deno": "^2.9.6",
@@ -32,5 +34,13 @@
     "turbo": "^2.11.4",
     "typescript": "~6.0.3",
     "@supabase/supabase-js": "^2.110.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "deno",
+      "esbuild",
+      "supabase",
+      "unrs-resolver"
+    ]
   }
 }

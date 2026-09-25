@@ -1,15 +1,40 @@
 # 로컬 개발 (Windows · Android 에뮬레이터)
 
+## 0. 가장 빠른 길 (이 PC에는 이미 설정됨)
+
+```bash
+pnpm android:dev
+```
+
+이 명령 하나로 다음이 순서대로 실행됩니다.
+
+1. Docker로 로컬 Supabase를 시작합니다.
+2. Edge Functions를 새 창에서 실행합니다.
+3. 에뮬레이터 `BibleFriend_Pixel`을 부팅합니다.
+4. 앱을 빌드·설치하고 Metro를 실행합니다.
+
+이 PC의 설치 위치(C: 드라이브 용량 부족으로 D:에 설치):
+
+| 항목 | 위치 / 값 |
+|---|---|
+| Android SDK (`ANDROID_HOME`) | `D:\Android\Sdk` (cmdline-tools, platform-tools, emulator, android-36, build-tools 36.0.0, NDK 27.1, CMake 3.22.1) |
+| 에뮬레이터 (`ANDROID_AVD_HOME`) | `D:\Android\avd\BibleFriend_Pixel` (Pixel 8, Android 16, Google Play, 4GB RAM, WHPX 가속) |
+| Gradle 캐시 (`GRADLE_USER_HOME`) | `D:\gradle` |
+
+다른 PC에서는 `cmdline-tools`만 설치하고 환경 변수를 설정한 뒤 `pnpm android:setup`을 실행하면 나머지 SDK 패키지와 에뮬레이터가 자동으로 설치됩니다.
+
 ## 1. 한 번만 설치
 
 | 도구 | 용도 | 확인 |
 |---|---|---|
 | Node.js 22+ / pnpm 10 | 패키지 | `node -v`, `pnpm -v` |
 | Docker Desktop | 로컬 Supabase | `docker info` |
-| JDK 17 이상 | Android 빌드 | `java -version` |
-| **Android Studio** | SDK + 에뮬레이터 | 아래 참고 |
+| JDK 17~21 | Android 빌드 | `java -version` |
+| Android SDK | SDK + 에뮬레이터 | 위 표 또는 아래 Android Studio |
 
-### Android Studio 설정
+### (선택) Android Studio 설정
+
+GUI(Device Manager, Logcat)가 필요할 때 설치합니다. 설치 마법사에서 SDK 위치를 `D:\Android\Sdk`로 지정하면 위 설치를 그대로 재사용합니다.
 
 1. [Android Studio](https://developer.android.com/studio)를 설치합니다.
 2. **More Actions → SDK Manager**에서 *Android SDK Platform*(최신)과 *Android SDK Build-Tools*, *Android Emulator*, *Android SDK Platform-Tools*를 설치합니다.

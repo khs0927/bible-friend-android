@@ -31,17 +31,13 @@ docs/                   아키텍처, 로컬 개발, 로그인 설정, 로드맵
 
 ## 빠른 시작 (Windows + Android 에뮬레이터)
 
-자세한 순서는 [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md)를 보세요.
-
 ```bash
 pnpm install
-pnpm db:start                 # Docker로 로컬 Supabase 실행
-pnpm functions:serve          # 다른 터미널에서 Edge Functions 실행
-cp apps/mobile/.env.example apps/mobile/.env.local   # 키 입력
-pnpm android                  # 개발 빌드 설치 + 에뮬레이터 실행 (Android Studio 필요)
+pnpm android:setup   # 최초 1회: SDK 패키지 확인/설치 + 에뮬레이터(BibleFriend_Pixel) 생성
+pnpm android:dev     # Supabase → Edge Functions → 에뮬레이터 → 앱 빌드·설치·실행
 ```
 
-로컬에서는 로그인 화면의 **"개발용 로그인"** 버튼으로 실제 카카오/구글 키 없이 바로 테스트할 수 있습니다(개발 빌드에서만 표시).
+자세한 내용은 [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md)를 보세요. 개발 빌드의 로그인 화면에 있는 **개발용 로그인** 버튼을 쓰면 실제 카카오/구글 키 없이 바로 테스트할 수 있습니다.
 
 ## 검증
 
