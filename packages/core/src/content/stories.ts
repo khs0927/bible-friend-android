@@ -1,0 +1,167 @@
+export type StoryAccent = 'coral' | 'mint' | 'blue' | 'violet' | 'gold';
+
+export interface StoryPage {
+  page: number;
+  title: string;
+  width: number;
+  height: number;
+  uri: string;
+}
+
+export interface BibleStory {
+  id: string;
+  title: string;
+  subtitle: string;
+  emoji: string;
+  body: string;
+  lesson: string;
+  verseRef: string;
+  accent: StoryAccent;
+  /** Illustrated picture-book pages, when the story has them. */
+  pages?: StoryPage[];
+}
+
+const DAVID_PAGE_BASE = 'https://cdn.creativeclaw.co/u/448e94a9/images';
+
+const DAVID_PAGE_ROWS: ReadonlyArray<readonly [number, string, number, number, string]> = [
+  [1, '이스라엘에 찾아온 큰 위기', 1086, 1448, '6dc6e98d-8107-40cd-858d-a3b3c395b74b'],
+  [2, '무서운 블레셋 군대', 1086, 1448, '7595f854-53a8-40b3-995e-c4fac8dd57b3'],
+  [3, '거인 골리앗', 1086, 1448, '3d197ba8-1ad6-4505-bdf5-c965df7e8b61'],
+  [4, '골리앗의 외침', 1086, 1448, '54201fe1-c607-481f-b884-d022713219d2'],
+  [5, '두려움에 빠진 이스라엘', 1086, 1448, 'ddc666f5-29dd-4c33-9115-881d7239fb5f'],
+  [6, '베들레헴의 작은 목동', 1086, 1448, '59556a02-5d4b-44f1-8d45-2451af97b5b0'],
+  [7, '양들을 돌보는 다윗', 1086, 1448, 'b2dac65b-e58d-41fc-a36f-f3263135953a'],
+  [8, '하나님을 믿는 마음', 1086, 1448, '1408b947-df4a-4bf2-a6f0-64c4177052d0'],
+  [9, '아버지의 심부름', 1086, 1448, 'b8e82e5a-7247-4275-9f7f-fdeffdc3360d'],
+  [10, '전쟁터에 도착한 다윗', 1086, 1448, '8e11e6de-631e-47f6-ac2b-622ccd7ed4aa'],
+  [11, '또다시 나타난 골리앗', 1024, 1536, '7120cb58-a3a8-41b1-9b1d-e2e4856bda31'],
+  [12, '이상하게 생각한 다윗', 1024, 1536, 'd2e3453d-5ad1-4af5-8c3e-dd7ee28237f2'],
+  [13, '다윗의 믿음', 1024, 1536, '52ab9ae6-b8ac-44bf-9529-962341d707a0'],
+  [14, '형들의 꾸중', 1024, 1536, '71c4d32e-7884-4c37-aa9e-126f721c0a9d'],
+  [15, '사울 왕에게 전해진 소식', 1024, 1536, '50df2e97-b674-40a1-8d2e-5100be72c188'],
+  [16, '왕 앞에 선 다윗', 1024, 1536, 'ff209dab-35af-4d41-bef0-75952b0bc924'],
+  [17, '사울 왕의 걱정', 1024, 1536, '24776c1c-4e7b-4767-b8de-18ab1dec27ad'],
+  [18, '하나님이 지켜 주셨어요', 1024, 1536, '85f87e7e-f858-4ef0-b58e-a414490e687e'],
+  [19, '다윗의 확신', 1024, 1536, '8026ab58-228f-46d5-adad-f4e778cca2ab'],
+  [20, '맞지 않는 갑옷', 1024, 1536, '21cf4e34-81d0-4a1a-a07c-5f7c2e9936e3'],
+  [21, '다윗이 선택한 무기', 941, 1672, 'dd391cef-f2f7-4930-b3ab-a77164ffca36'],
+  [22, '골리앗을 향해 걷는 다윗', 941, 1672, 'a02f0ce3-62df-4ab7-bd49-80cbe1f01b7a'],
+  [23, '골리앗의 비웃음', 941, 1672, '523f4cee-2fcd-4e43-815b-233b48f9c5bb'],
+  [24, '다윗의 대답', 941, 1672, '0fa34620-2d4c-471d-b74d-e91690874917'],
+  [25, '승리는 하나님께 있어요', 941, 1672, '1d00ff7b-275c-4c10-919a-cfe76776d324'],
+  [26, '달려가는 다윗', 941, 1672, '63f2f5cf-a064-49e5-9f43-43c2f0c6ab9a'],
+  [27, '물매를 돌리는 다윗', 941, 1672, '929aa24e-3315-4e85-afba-5eb32eee80d0'],
+  [28, '날아가는 작은 돌', 941, 1672, '238b8f37-0b83-4d9e-bdf4-c9ad0cde41c1'],
+  [29, '하나님이 주신 승리', 941, 1672, '0f5104b4-f6f7-45ad-a0de-95f86f861ba6'],
+  [30, '진짜 용기의 비밀', 941, 1672, '80963639-ff68-4384-be63-fbfc34da9854'],
+];
+
+const DAVID_PAGES: StoryPage[] = DAVID_PAGE_ROWS.map(([page, title, width, height, id]) => ({
+  page,
+  title,
+  width,
+  height,
+  uri: `${DAVID_PAGE_BASE}/${id}.png`,
+}));
+
+export const BIBLE_STORIES: BibleStory[] = [
+  {
+    id: 'creation',
+    title: '천지창조',
+    subtitle: '하나님이 만드신 아름다운 세상',
+    emoji: '🌍',
+    body: '아주 먼 옛날, 하나님은 말씀으로 빛과 하늘, 바다와 땅을 만드셨어요. 예쁜 꽃과 나무, 바다의 물고기와 하늘의 새, 귀여운 동물도 만드셨지요. 그리고 하나님은 우리를 지으시고 아주 기뻐하셨어요.',
+    lesson: '세상과 나는 하나님의 아름다운 선물이에요.',
+    verseRef: '창세기 1:31',
+    accent: 'violet',
+  },
+  {
+    id: 'noah',
+    title: '노아의 방주',
+    subtitle: '약속을 지키시는 하나님',
+    emoji: '🌈',
+    body: '하나님은 노아에게 큰 배를 만들라고 말씀하셨어요. 노아는 믿음으로 순종했고, 동물 친구들과 가족을 방주에 태웠어요. 비가 그친 뒤 하나님은 다시는 물로 세상을 심판하지 않겠다는 약속의 무지개를 보여 주셨어요.',
+    lesson: '하나님은 우리를 돌보시고, 약속을 소중히 지키세요.',
+    verseRef: '창세기 9:13',
+    accent: 'coral',
+  },
+  {
+    id: 'joseph',
+    title: '꿈꾸는 요셉',
+    subtitle: '꿈을 품고 다시 일어나는 마음',
+    emoji: '⭐',
+    body: '요셉은 하나님이 주신 특별한 꿈을 마음에 간직했어요. 어려운 일을 만났을 때도 하나님은 요셉과 함께하셨고, 요셉은 지혜와 성실함으로 사람들을 도왔어요. 시간이 지나 요셉의 꿈은 다른 사람을 살리는 멋진 일이 되었답니다.',
+    lesson: '하나님은 어려운 순간에도 함께하시고, 우리의 마음을 좋은 길로 이끄세요.',
+    verseRef: '창세기 50:20',
+    accent: 'gold',
+  },
+  {
+    id: 'david',
+    title: '다윗과 골리앗',
+    subtitle: '작은 용기가 만드는 큰 변화',
+    emoji: '🪨',
+    body: '다윗은 아주 큰 골리앗을 보았지만, 무서움보다 하나님을 믿는 마음을 선택했어요. 다윗은 작은 물매돌 하나로 골리앗에게 맞섰고, 하나님이 주신 용기로 이겨 냈답니다.',
+    lesson: '내가 작아 보여도 하나님을 믿고 용기를 낼 수 있어요.',
+    verseRef: '사무엘상 17:47',
+    accent: 'mint',
+    pages: DAVID_PAGES,
+  },
+  {
+    id: 'solomon',
+    title: '지혜의 왕 솔로몬',
+    subtitle: '하나님께 지혜를 구한 왕',
+    emoji: '👑',
+    body: '솔로몬은 왕이 되었을 때 큰 부나 명예보다 백성들을 바르게 이끌 수 있는 지혜로운 마음을 하나님께 구했어요. 하나님은 솔로몬의 예쁜 마음을 기뻐하시며 넘치는 지혜와 축복을 주셨답니다.',
+    lesson: '가장 소중한 것은 하나님이 주시는 지혜와 바른 마음이에요.',
+    verseRef: '열왕기상 3:9',
+    accent: 'mint',
+  },
+  {
+    id: 'daniel',
+    title: '사자굴의 다니엘',
+    subtitle: '어려움 속에서도 지켜주시는 하나님',
+    emoji: '🦁',
+    body: '다니엘은 하나님께 매일 기도하는 것을 멈추지 않았어요. 위험한 사자굴에 던져졌을 때도 하나님은 천사를 보내어 다니엘을 안전하게 지켜 주셨답니다.',
+    lesson: '누가 뭐라 해도 하나님을 향한 믿음과 기도를 지켜요.',
+    verseRef: '다니엘 6:22',
+    accent: 'violet',
+  },
+  {
+    id: 'jesus',
+    title: '예수님의 사랑',
+    subtitle: '있는 그대로 안아 주시는 사랑',
+    emoji: '💛',
+    body: '예수님은 어린이들이 가까이 오는 것을 기뻐하셨어요. 예수님은 사람들의 이야기를 귀 기울여 듣고, 아픈 마음을 위로하셨어요. 예수님의 사랑은 누구에게나 열려 있고, 우리도 서로 따뜻하게 대할 수 있게 해 줘요.',
+    lesson: '나는 사랑받는 소중한 어린이이고, 다른 사람에게도 사랑을 나눌 수 있어요.',
+    verseRef: '마가복음 10:14',
+    accent: 'blue',
+  },
+  {
+    id: 'easter',
+    title: '부활절 아침',
+    subtitle: '새 생명과 승리의 기쁨',
+    emoji: '🌅',
+    body: '예수님은 우리를 위해 십자가에서 모든 아픔을 이기시고, 삼일 만에 다시 살아나셨어요! 슬퍼하던 제자들에게 찾아와 평안을 주셨고, 영원한 생명과 소망의 기쁨을 선물로 주셨답니다.',
+    lesson: '예수님의 부활은 우리 마음에 영원한 소망과 기쁨을 줘요.',
+    verseRef: '누가복음 24:6',
+    accent: 'coral',
+  },
+  {
+    id: 'thanksgiving',
+    title: '추수감사 축제',
+    subtitle: '하나님이 주신 은혜에 감사해요',
+    emoji: '🌾',
+    body: '이스라엘 백성들은 하나님이 한 해 동안 밭에 거둔 곡식과 과일로 풍성하게 채워 주신 은혜를 기억하며 기쁨의 축제를 드렸어요. 우리 삶의 모든 작은 순간도 하나님의 선물이에요.',
+    lesson: '매일의 일상과 채워주시는 은혜에 감사하는 마음을 가져요.',
+    verseRef: '시편 107:1',
+    accent: 'gold',
+  },
+];
+
+export function getStory(id: string): BibleStory | undefined {
+  return BIBLE_STORIES.find((story) => story.id === id);
+}
+
+export function storyContext(story: BibleStory): string {
+  return `${story.title}: ${story.body}\n핵심: ${story.lesson}\n구절: ${story.verseRef}`;
+}

@@ -1,0 +1,87 @@
+export interface BibleQuiz {
+  id: string;
+  storyId: string;
+  question: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+}
+
+export const QUIZ_BANK: BibleQuiz[] = [
+  {
+    id: 'q-creation',
+    storyId: 'creation',
+    question: '하나님이 만드신 것 중 하나가 아닌 것은 무엇인가요?',
+    options: ['하늘의 별', '바다의 물고기', '예쁜 꽃', '자동차 경주 트랙'],
+    answer: 3,
+    explanation: '성경의 창조 이야기는 하늘과 땅, 생명과 사람을 말해요. 자동차 경주 트랙은 훨씬 나중에 사람이 만든 것이랍니다.',
+  },
+  {
+    id: 'q-noah',
+    storyId: 'noah',
+    question: '노아가 동물 친구들과 함께 들어간 것은 무엇인가요?',
+    options: ['큰 배', '궁전', '동굴', '높은 탑'],
+    answer: 0,
+    explanation: '노아는 하나님 말씀에 따라 방주라는 큰 배를 만들었어요.',
+  },
+  {
+    id: 'q-joseph',
+    storyId: 'joseph',
+    question: '요셉은 어려운 순간에도 누구와 함께했나요?',
+    options: ['하나님', '아무도 없이 혼자', '골리앗', '바다 괴물'],
+    answer: 0,
+    explanation: '하나님은 요셉이 어려운 일을 만날 때도 함께하셨어요.',
+  },
+  {
+    id: 'q-david',
+    storyId: 'david',
+    question: '다윗이 골리앗에게 맞설 때 사용한 것은 무엇인가요?',
+    options: ['물매돌', '큰 창', '마법 지팡이', '대포'],
+    answer: 0,
+    explanation: '다윗은 물매와 돌을 사용했지만, 진짜 힘은 하나님을 믿는 용기였어요.',
+  },
+  {
+    id: 'q-solomon',
+    storyId: 'solomon',
+    question: '솔로몬이 하나님께 가장 먼저 구한 것은 무엇인가요?',
+    options: ['지혜로운 마음', '커다란 성', '맛있는 음식', '많은 보물'],
+    answer: 0,
+    explanation: '솔로몬은 백성을 바르게 이끌 지혜로운 마음을 구했어요.',
+  },
+  {
+    id: 'q-daniel',
+    storyId: 'daniel',
+    question: '다니엘이 사자굴에 던져졌을 때 누가 지켜주었나요?',
+    options: ['하나님의 천사', '친절한 사자', '왕의 군사', '날아가는 새'],
+    answer: 0,
+    explanation: '하나님은 천사를 보내 다니엘을 지켜 주셨어요.',
+  },
+  {
+    id: 'q-jesus',
+    storyId: 'jesus',
+    question: '예수님은 어린이들이 가까이 오는 것을 어떻게 하셨나요?',
+    options: ['기쁘게 맞아 주셨어요', '멀리 보내셨어요', '모른 척했어요', '숨으셨어요'],
+    answer: 0,
+    explanation: '예수님은 어린이들을 사랑하시고 가까이 오는 것을 기뻐하셨어요.',
+  },
+  {
+    id: 'q-easter',
+    storyId: 'easter',
+    question: '예수님은 며칠 만에 다시 살아나셨나요?',
+    options: ['삼일 만에', '일주일 뒤', '한 달 뒤', '바로 다음 날'],
+    answer: 0,
+    explanation: '예수님은 부활하셔서 우리에게 영원한 소망을 주셨어요.',
+  },
+  {
+    id: 'q-thanksgiving',
+    storyId: 'thanksgiving',
+    question: '하나님의 은혜에 감사드리며 열매를 나누는 절기는 무엇인가요?',
+    options: ['추수감사절', '여름방학', '운동회', '새해 첫날'],
+    answer: 0,
+    explanation: '한 해 동안 베풀어주신 은혜에 감사하는 추수감사절이에요.',
+  },
+];
+
+export function quizForStory(storyId: string): BibleQuiz | undefined {
+  return QUIZ_BANK.find((quiz) => quiz.storyId === storyId);
+}

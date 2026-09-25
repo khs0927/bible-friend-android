@@ -1,0 +1,33 @@
+node_modules/
+.turbo/
+dist/
+coverage/
+*.log
+
+# Expo
+.expo/
+web-build/
+expo-env.d.ts
+apps/mobile/ios/
+apps/mobile/android/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+supabase/functions/.env
+supabase/.temp/
+supabase/.branches/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

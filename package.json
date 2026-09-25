@@ -1,0 +1,36 @@
+{
+  "name": "bible-friend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "성경 친구 — 어린이를 위한 AI 성경 친구 앱 (Expo + Supabase)",
+  "packageManager": "pnpm@10.4.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter mobile start",
+    "android": "pnpm --filter mobile android",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "check": "pnpm sync:core --check && turbo run typecheck lint test",
+    "sync:core": "node scripts/sync-core.mjs",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > apps/mobile/src/lib/database.types.ts",
+    "functions:serve": "supabase functions serve --env-file supabase/functions/.env",
+    "functions:check": "deno check --config supabase/functions/deno.json supabase/functions/*/index.ts",
+    "format": "prettier --write .",
+    "smoke": "node scripts/smoke-local.mjs",
+    "db:test": "supabase test db"
+  },
+  "devDependencies": {
+    "deno": "^2.9.6",
+    "prettier": "^3.6.2",
+    "supabase": "^2.118.0",
+    "turbo": "^2.11.4",
+    "typescript": "~6.0.3",
+    "@supabase/supabase-js": "^2.110.0"
+  }
+}

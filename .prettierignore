@@ -1,0 +1,3 @@
+pnpm-lock.yaml
+supabase/functions/_shared/core/
+packages/core/src/database.types.ts

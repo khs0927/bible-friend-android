@@ -1,0 +1,54 @@
+export interface Verse {
+  id: string;
+  ref: string;
+  text: string;
+  theme: string;
+}
+
+/**
+ * Short key-verse excerpts (개역개정 wording) kept concise so children can
+ * memorize them and speech transcription can match them reliably.
+ */
+export const MEMORY_VERSES: Verse[] = [
+  { id: 'john-3-16', ref: '요한복음 3:16', text: '하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니', theme: '사랑' },
+  { id: 'psalm-23-1', ref: '시편 23:1', text: '여호와는 나의 목자시니 내게 부족함이 없으리로다', theme: '돌보심' },
+  { id: 'phil-4-6', ref: '빌립보서 4:6', text: '아무 것도 염려하지 말고 다만 모든 일에 기도와 간구로', theme: '평안' },
+  { id: 'eph-6-16', ref: '에베소서 6:16', text: '모든 것 위에 믿음의 방패를 가지고', theme: '믿음' },
+  { id: 'josh-1-9', ref: '여호수아 1:9', text: '강하고 담대하라 두려워하지 말며 놀라지 말라', theme: '용기' },
+  { id: 'prov-3-5', ref: '잠언 3:5', text: '너는 마음을 다하여 여호와를 신뢰하고 네 명철을 의지하지 말라', theme: '지혜' },
+  { id: 'phil-4-4', ref: '빌립보서 4:4', text: '주 안에서 항상 기뻐하라 내가 다시 말하노니 기뻐하라', theme: '기쁨' },
+];
+
+export function getVerse(id: string): Verse | undefined {
+  return MEMORY_VERSES.find((verse) => verse.id === id);
+}
+
+/** A stable "verse of the day": every child sees the same verse on the same day. */
+export function verseOfTheDay(dateKey: string): Verse {
+  let hash = 0;
+  for (const char of dateKey) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return MEMORY_VERSES[hash % MEMORY_VERSES.length] ?? MEMORY_VERSES[0]!;
+}
+
+/**
+ * Loose comparison for spoken or typed recitations: ignores spacing and
+ * punctuation and accepts ≥ 80% of the verse's characters in order.
+ */
+export function recitationMatches(expected: string, attempt: string): boolean {
+  const normalize = (value: string) => value.replace(/[^\p{L}\p{N}]/gu, '');
+  const a = normalize(expected);
+  const b = normalize(attempt);
+  if (!a || !b) return false;
+  if (b.includes(a)) return true;
+  // Longest common subsequence, single-row DP.
+  const row: number[] = new Array(b.length + 1).fill(0);
+  for (let i = 1; i <= a.length; i += 1) {
+    let diagonal = 0;
+    for (let j = 1; j <= b.length; j += 1) {
+      const above = row[j]!;
+      row[j] = a[i - 1] === b[j - 1] ? diagonal + 1 : Math.max(above, row[j - 1]!);
+      diagonal = above;
+    }
+  }
+  return row[b.length]! / a.length >= 0.8;
+}

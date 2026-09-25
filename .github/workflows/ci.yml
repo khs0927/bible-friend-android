@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Core + mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Edge Functions use the current core copy
+        run: pnpm sync:core --check
+      - name: Core unit tests
+        run: pnpm --filter @bible-friend/core test
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm --filter mobile lint
+      - name: Android JS bundle
+        run: pnpm --filter mobile export:android
+
+  backend:
+    name: Supabase (DB + Edge Functions)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Type-check Edge Functions
+        run: pnpm functions:check
+      - name: Start local Supabase
+        run: pnpm exec supabase start -x studio,imgproxy,vector,logflare,supavisor,mailpit,realtime
+      - name: Database security tests (pgTAP)
+        run: pnpm db:test
+      - name: Serve Edge Functions
+        run: |
+          touch supabase/functions/.env
+          nohup pnpm exec supabase functions serve --env-file supabase/functions/.env > functions.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null -w '%{http_code}' -X OPTIONS http://127.0.0.1:54321/functions/v1/growth | grep -qE '^(200|204|401)$'; then break; fi
+            sleep 2
+          done
+      - name: End-to-end smoke test
+        run: pnpm smoke
+      - name: Functions log
+        if: failure()
+        run: cat functions.log

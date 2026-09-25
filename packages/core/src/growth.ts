@@ -1,0 +1,370 @@
+// Growth ("성장") domain: the child's Bible-friend character grows through
+// reading, memorizing, praying and serving. Pure functions only — the same code
+// runs in the mobile app (for optimistic previews) and in the `growth` Edge
+// Function (the source of truth).
+
+export type GrowthStage = 'seedling' | 'disciple' | 'warrior' | 'servant' | 'crowned';
+export type GrowthMood = 'joyful' | 'peaceful' | 'hungry' | 'resting' | 'brave';
+export type GrowthZone = 'home' | 'road' | 'wilderness' | 'village';
+export type GrowthActivityType =
+  | 'scripture_read'
+  | 'verse_memorized'
+  | 'bible_conversation'
+  | 'prayer'
+  | 'service_mission'
+  | 'wilderness_victory';
+export type EquipmentId =
+  | 'belt_truth'
+  | 'breastplate_righteousness'
+  | 'shoes_peace'
+  | 'shield_faith'
+  | 'helmet_salvation'
+  | 'sword_spirit'
+  | 'crown';
+
+export const GROWTH_ACTIVITY_TYPES = [
+  'scripture_read',
+  'verse_memorized',
+  'bible_conversation',
+  'prayer',
+  'service_mission',
+  'wilderness_victory',
+] as const satisfies readonly GrowthActivityType[];
+
+export const EQUIPMENT_IDS = [
+  'belt_truth',
+  'breastplate_righteousness',
+  'shoes_peace',
+  'shield_faith',
+  'helmet_salvation',
+  'sword_spirit',
+  'crown',
+] as const satisfies readonly EquipmentId[];
+
+export type EquipmentTiers = Record<EquipmentId, number>;
+
+export interface GrowthProfile {
+  stage: GrowthStage;
+  spiritFood: number;
+  faithXp: number;
+  wisdomXp: number;
+  loveXp: number;
+  peace: number;
+  soulPoints: number;
+  streakDays: number;
+  /** ISO timestamp of the last activity that "fed" the character. */
+  lastNourishedAt: string | null;
+  equipmentTiers: EquipmentTiers;
+  equipped: EquipmentId[];
+  unlockedZones: GrowthZone[];
+}
+
+export interface GrowthReward {
+  spiritFood?: number;
+  faithXp?: number;
+  wisdomXp?: number;
+  loveXp?: number;
+  peace?: number;
+  soulPoints?: number;
+  fillSpiritFood?: boolean;
+}
+
+export const INITIAL_EQUIPMENT_TIERS: EquipmentTiers = {
+  belt_truth: 0,
+  breastplate_righteousness: 0,
+  shoes_peace: 0,
+  shield_faith: 0,
+  helmet_salvation: 0,
+  sword_spirit: 0,
+  crown: 0,
+};
+
+export const INITIAL_GROWTH_PROFILE: GrowthProfile = {
+  stage: 'seedling',
+  spiritFood: 65,
+  faithXp: 0,
+  wisdomXp: 0,
+  loveXp: 0,
+  peace: 80,
+  soulPoints: 0,
+  streakDays: 0,
+  lastNourishedAt: null,
+  equipmentTiers: INITIAL_EQUIPMENT_TIERS,
+  equipped: [],
+  unlockedZones: ['home'],
+};
+
+export const ACTIVITY_REWARDS: Record<GrowthActivityType, GrowthReward> = {
+  scripture_read: { spiritFood: 30, wisdomXp: 10, faithXp: 5 },
+  verse_memorized: { fillSpiritFood: true, faithXp: 25, wisdomXp: 8 },
+  bible_conversation: { spiritFood: 5, wisdomXp: 3 },
+  prayer: { peace: 20, faithXp: 3 },
+  service_mission: { loveXp: 15, soulPoints: 10, faithXp: 5 },
+  wilderness_victory: { faithXp: 20, soulPoints: 10, wisdomXp: 5 },
+};
+
+/** Conversation rewards are capped so the character can't be "farmed" by chatting. */
+export const DAILY_CONVERSATION_REWARD_LIMIT = 5;
+
+export const STAGE_LABELS: Record<GrowthStage, string> = {
+  seedling: '새싹 성경 친구',
+  disciple: '쑥쑥 자라는 제자',
+  warrior: '지혜로운 믿음 용사',
+  servant: '사랑으로 섬기는 제자',
+  crowned: '면류관을 향해 걷는 친구',
+};
+
+export const MOOD_LABELS: Record<GrowthMood, string> = {
+  joyful: '기뻐요',
+  peaceful: '평안해요',
+  hungry: '말씀이 고파요',
+  resting: '쉬고 있어요',
+  brave: '용감해요',
+};
+
+function clamp(value: number, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, value));
+}
+
+export function calculateStage(
+  profile: Pick<GrowthProfile, 'faithXp' | 'wisdomXp' | 'loveXp'>,
+): GrowthStage {
+  if (profile.faithXp >= 900 && profile.wisdomXp >= 500 && profile.loveXp >= 350) return 'crowned';
+  if (profile.faithXp >= 500 && profile.wisdomXp >= 260 && profile.loveXp >= 180) return 'servant';
+  if (profile.faithXp >= 240 && profile.wisdomXp >= 120 && profile.loveXp >= 50) return 'warrior';
+  if (profile.faithXp >= 80 && profile.wisdomXp >= 40) return 'disciple';
+  return 'seedling';
+}
+
+export function unlockedZonesForStage(stage: GrowthStage): GrowthZone[] {
+  if (stage === 'crowned' || stage === 'servant') return ['home', 'road', 'wilderness', 'village'];
+  if (stage === 'warrior') return ['home', 'road', 'wilderness'];
+  if (stage === 'disciple') return ['home', 'road'];
+  return ['home'];
+}
+
+export function moodForProfile(profile: GrowthProfile): GrowthMood {
+  if (profile.spiritFood <= 0) return 'resting';
+  if (profile.spiritFood < 30) return 'hungry';
+  if (profile.peace >= 85) return 'peaceful';
+  if (profile.stage === 'warrior' || profile.stage === 'servant' || profile.stage === 'crowned') {
+    return 'brave';
+  }
+  return 'joyful';
+}
+
+/** Progress (0–1) towards the next stage, averaged over the XP requirements. */
+export function stageProgress(profile: GrowthProfile): number {
+  const next: Record<GrowthStage, [number, number, number] | null> = {
+    seedling: [80, 40, 0],
+    disciple: [240, 120, 50],
+    warrior: [500, 260, 180],
+    servant: [900, 500, 350],
+    crowned: null,
+  };
+  const target = next[profile.stage];
+  if (!target) return 1;
+  const parts = [
+    target[0] ? Math.min(1, profile.faithXp / target[0]) : 1,
+    target[1] ? Math.min(1, profile.wisdomXp / target[1]) : 1,
+    target[2] ? Math.min(1, profile.loveXp / target[2]) : 1,
+  ];
+  return parts.reduce((sum, value) => sum + value, 0) / parts.length;
+}
+
+export function applyReward(profile: GrowthProfile, reward: GrowthReward): GrowthProfile {
+  const next: GrowthProfile = {
+    ...profile,
+    spiritFood: reward.fillSpiritFood ? 100 : clamp(profile.spiritFood + (reward.spiritFood ?? 0)),
+    faithXp: Math.max(0, profile.faithXp + (reward.faithXp ?? 0)),
+    wisdomXp: Math.max(0, profile.wisdomXp + (reward.wisdomXp ?? 0)),
+    loveXp: Math.max(0, profile.loveXp + (reward.loveXp ?? 0)),
+    peace: clamp(profile.peace + (reward.peace ?? 0)),
+    soulPoints: Math.max(0, profile.soulPoints + (reward.soulPoints ?? 0)),
+  };
+  next.stage = calculateStage(next);
+  next.unlockedZones = unlockedZonesForStage(next.stage);
+  return next;
+}
+
+export function applyDailyDecay(profile: GrowthProfile, daysMissed: number): GrowthProfile {
+  if (daysMissed <= 0) return profile;
+  return {
+    ...profile,
+    spiritFood: clamp(profile.spiritFood - Math.min(60, daysMissed * 20)),
+    peace: clamp(profile.peace - Math.min(20, daysMissed * 5)),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Dates — the app's "day" is the Korean calendar day (Asia/Seoul).
+// ---------------------------------------------------------------------------
+
+export function seoulDateKey(date: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? '00';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+function seoulDayNumber(date: Date) {
+  const [year = 1970, month = 1, day = 1] = seoulDateKey(date).split('-').map(Number);
+  return Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
+}
+
+export function seoulDayDistance(from: Date, to: Date = new Date()): number {
+  return Math.max(0, seoulDayNumber(to) - seoulDayNumber(from));
+}
+
+/**
+ * Applies hunger decay for the days since the character was last fed and
+ * breaks the streak when a whole day was skipped. Idempotent for the same day.
+ */
+export function settleProfile(profile: GrowthProfile, now: Date = new Date()): GrowthProfile {
+  if (!profile.lastNourishedAt) return profile;
+  const distance = seoulDayDistance(new Date(profile.lastNourishedAt), now);
+  if (distance <= 1) return profile;
+  return { ...applyDailyDecay(profile, distance - 1), streakDays: 0 };
+}
+
+/**
+ * The idempotency key for an activity. A claim with a key that already exists
+ * in `growth_events` grants nothing, which makes rewards safe to retry.
+ */
+export function activityEventKey(
+  type: GrowthActivityType,
+  sourceId: string,
+  now: Date = new Date(),
+): string {
+  const day = seoulDateKey(now);
+  switch (type) {
+    case 'scripture_read':
+      return `scripture_read:${sourceId}`;
+    case 'prayer':
+      return `prayer:${day}`;
+    default:
+      return `${type}:${day}:${sourceId}`;
+  }
+}
+
+export interface ClaimResult {
+  profile: GrowthProfile;
+  reward: GrowthReward;
+  message: string;
+  stageChanged: boolean;
+}
+
+/** Applies an activity's reward and updates the daily streak. */
+export function claimActivity(
+  profile: GrowthProfile,
+  type: GrowthActivityType,
+  now: Date = new Date(),
+): ClaimResult {
+  const settled = settleProfile(profile, now);
+  const reward = ACTIVITY_REWARDS[type];
+  const rewarded = applyReward(settled, reward);
+  const firstToday =
+    !settled.lastNourishedAt || seoulDayDistance(new Date(settled.lastNourishedAt), now) >= 1;
+  const next: GrowthProfile = {
+    ...rewarded,
+    streakDays: firstToday ? settled.streakDays + 1 : settled.streakDays,
+    lastNourishedAt: now.toISOString(),
+  };
+  return {
+    profile: next,
+    reward,
+    message: activityMessage(type),
+    stageChanged: next.stage !== profile.stage,
+  };
+}
+
+export function upgradeCost(equipmentId: EquipmentId, currentTier: number): number {
+  const index = Math.min(currentTier + 1, 5);
+  if (equipmentId === 'crown') return [0, 120, 180, 260, 360, 500][index] ?? 500;
+  return [0, 20, 45, 80, 130, 200][index] ?? 200;
+}
+
+export function canUpgrade(profile: GrowthProfile, equipmentId: EquipmentId) {
+  const tier = profile.equipmentTiers[equipmentId];
+  const cost = upgradeCost(equipmentId, tier);
+  if (tier >= 5) return { ok: false, reason: '이미 최고 단계예요.', cost: 0 };
+  if (equipmentId === 'crown' && profile.stage !== 'crowned') {
+    return {
+      ok: false,
+      reason: '면류관은 오랜 말씀·믿음·사랑의 여정을 거친 뒤 열려요.',
+      cost,
+    };
+  }
+  if (profile.soulPoints < cost) {
+    return { ok: false, reason: `영혼 포인트가 ${cost - profile.soulPoints} 더 필요해요.`, cost };
+  }
+  return { ok: true, reason: '업그레이드할 수 있어요!', cost };
+}
+
+export function upgradeEquipment(profile: GrowthProfile, equipmentId: EquipmentId): GrowthProfile {
+  const check = canUpgrade(profile, equipmentId);
+  if (!check.ok) return profile;
+  const equipped = profile.equipped.includes(equipmentId)
+    ? profile.equipped
+    : [...profile.equipped, equipmentId];
+  return {
+    ...profile,
+    soulPoints: profile.soulPoints - check.cost,
+    equipmentTiers: {
+      ...profile.equipmentTiers,
+      [equipmentId]: Math.min(5, profile.equipmentTiers[equipmentId] + 1),
+    },
+    equipped,
+  };
+}
+
+export function activityMessage(type: GrowthActivityType): string {
+  switch (type) {
+    case 'scripture_read':
+      return '말씀 한 끼를 맛있게 먹었어요! 지혜와 믿음이 자라나요.';
+    case 'verse_memorized':
+      return '말씀을 마음에 꼭 담았어요! 오늘 영혼의 식사가 든든하게 채워졌어요.';
+    case 'bible_conversation':
+      return '성경 친구와 말씀을 더 깊이 알아갔어요.';
+    case 'prayer':
+      return '기도하며 마음에 평안이 차올랐어요.';
+    case 'service_mission':
+      return '사랑을 나누니 영혼 포인트와 사랑 경험이 자랐어요.';
+    case 'wilderness_victory':
+      return '두려움보다 말씀을 선택했어요. 믿음이 더 단단해졌어요!';
+  }
+}
+
+/** Parses a stored profile defensively, filling any missing fields. */
+export function normalizeProfile(value: unknown): GrowthProfile {
+  const raw = (value && typeof value === 'object' ? value : {}) as Partial<GrowthProfile>;
+  const num = (v: unknown, fallback: number) =>
+    typeof v === 'number' && Number.isFinite(v) ? v : fallback;
+  const tiers = { ...INITIAL_EQUIPMENT_TIERS };
+  for (const id of EQUIPMENT_IDS) {
+    tiers[id] = Math.max(0, Math.min(5, num(raw.equipmentTiers?.[id], 0)));
+  }
+  const profile: GrowthProfile = {
+    ...INITIAL_GROWTH_PROFILE,
+    spiritFood: clamp(num(raw.spiritFood, INITIAL_GROWTH_PROFILE.spiritFood)),
+    faithXp: Math.max(0, num(raw.faithXp, 0)),
+    wisdomXp: Math.max(0, num(raw.wisdomXp, 0)),
+    loveXp: Math.max(0, num(raw.loveXp, 0)),
+    peace: clamp(num(raw.peace, INITIAL_GROWTH_PROFILE.peace)),
+    soulPoints: Math.max(0, num(raw.soulPoints, 0)),
+    streakDays: Math.max(0, num(raw.streakDays, 0)),
+    lastNourishedAt: typeof raw.lastNourishedAt === 'string' ? raw.lastNourishedAt : null,
+    equipmentTiers: tiers,
+    equipped: Array.isArray(raw.equipped)
+      ? raw.equipped.filter((id): id is EquipmentId => (EQUIPMENT_IDS as readonly string[]).includes(id))
+      : [],
+  };
+  profile.stage = calculateStage(profile);
+  profile.unlockedZones = unlockedZonesForStage(profile.stage);
+  return profile;
+}
