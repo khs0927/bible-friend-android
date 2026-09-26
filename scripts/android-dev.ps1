@@ -35,6 +35,18 @@ if (-not (Test-Path $fnEnv)) { Copy-Item (Join-Path $root 'supabase\functions\.e
 Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$root'; pnpm functions:serve" | Out-Null
 Write-Host '▶ Edge Functions starting in a new window'
 
+# 2b. Open-source voice fallback (Supertonic 3 + faster-whisper), if installed.
+#     Whisper "small" keeps local memory use low; servers use large-v3-turbo.
+$voiceDir = Join-Path $root 'services\voice-cpu'
+$voiceKey = (Get-Content $fnEnv | Where-Object { $_ -match '^VOICE_API_KEY=' }) -replace '^VOICE_API_KEY=', ''
+if ((Test-Path "$voiceDir\.venv\Scripts\python.exe") -and $voiceKey) {
+  $voiceCmd = "Set-Location '$voiceDir'; `$env:VOICE_API_KEY='$voiceKey'; `$env:WHISPER_MODEL='small'; `$env:HF_HOME='D:\hf-cache'; `$env:VOICE_MODEL_DIR='D:\hf-cache'; .\.venv\Scripts\python.exe -m uvicorn app:app --host 0.0.0.0 --port 8808"
+  Start-Process powershell -ArgumentList '-NoExit', '-Command', $voiceCmd | Out-Null
+  Write-Host '▶ Open-source voice server starting in a new window (port 8808)'
+} else {
+  Write-Host '• Voice fallback not installed (see docs/VOICE_AI.md) — Gemini + on-device voice only'
+}
+
 # 3. Emulator
 $devices = (adb devices) -match "`tdevice$"
 if (-not $devices) {
