@@ -5,14 +5,21 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
+import { ErrorScreen } from '@/components/error-screen';
 import { SessionProvider, useSession } from '@/lib/session';
+import { useStopSpeakingInBackground } from '@/lib/speech';
 import { colors } from '@/theme';
 
 void SplashScreen.preventAutoHideAsync();
 
+/** Any uncaught render error shows a friendly retry screen instead of a blank app. */
+export const ErrorBoundary = ErrorScreen;
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Jua_400Regular, GowunDodum_400Regular });
+  useStopSpeakingInBackground();
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -24,12 +31,14 @@ export default function RootLayout() {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <StatusBar style="dark" />
-        <RootNavigator fontsLoaded={fontsLoaded} />
-      </SessionProvider>
-    </QueryClientProvider>
+    <KeyboardProvider>
+      <QueryClientProvider client={queryClient}>
+        <SessionProvider>
+          <StatusBar style="dark" />
+          <RootNavigator fontsLoaded={fontsLoaded} />
+        </SessionProvider>
+      </QueryClientProvider>
+    </KeyboardProvider>
   );
 }
 

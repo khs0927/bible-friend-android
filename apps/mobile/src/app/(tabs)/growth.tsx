@@ -13,7 +13,8 @@ import {
   type Verse,
 } from '@bible-friend/core';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { Button, Card, Loading, Mascot, ProgressBar, Screen, T } from '@/components/ui';
 import { toFriendlyMessage } from '@/lib/api';
@@ -55,7 +56,7 @@ export default function GrowthScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={styles.content}>
+      <KeyboardAwareScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" bottomOffset={24}>
         <Card style={styles.heroCard}>
           <Mascot pose={mood === 'hungry' || mood === 'resting' ? 'listen' : 'wave'} size={120} />
           <T variant="title">{STAGE_LABELS[profile.stage]}</T>
@@ -139,7 +140,7 @@ export default function GrowthScreen() {
             );
           })}
         </Card>
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

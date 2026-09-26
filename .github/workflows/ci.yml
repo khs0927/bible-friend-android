@@ -29,6 +29,8 @@ jobs:
         run: pnpm sync:core --check
       - name: Core unit tests
         run: pnpm --filter @bible-friend/core test
+      - name: Mobile component tests (jest-expo)
+        run: pnpm --filter mobile test -- --ci
       - name: Typecheck
         run: pnpm typecheck
       - name: Lint

@@ -7,7 +7,8 @@
 import { splitForSpeech, speakableText, type Speaker } from '@bible-friend/core';
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import * as Speech from 'expo-speech';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { AppState } from 'react-native';
 
 import { api } from './api';
 
@@ -33,8 +34,12 @@ function subscribe(listener: Listener) {
 }
 
 /** The id passed to `speak` for the utterance currently playing, or null. */
+export function getSpeakingId(): string | null {
+  return speakingId;
+}
+
 export function useSpeakingId(): string | null {
-  return useSyncExternalStore(subscribe, () => speakingId);
+  return useSyncExternalStore(subscribe, getSpeakingId);
 }
 
 async function ensureAudioMode() {
@@ -131,4 +136,14 @@ export async function speak(text: string, options: { id: string; speaker?: Speak
   } finally {
     if (myGeneration === generation) setSpeaking(null);
   }
+}
+
+/** Reading aloud stops when the app leaves the foreground. */
+export function useStopSpeakingInBackground() {
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') stopSpeaking();
+    });
+    return () => subscription.remove();
+  }, []);
 }

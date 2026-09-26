@@ -2,7 +2,8 @@
 // is remembered on the device.
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { Button, Card, Mascot, Screen, T, type MascotPose } from '@/components/ui';
 import { useSession } from '@/lib/session';
@@ -51,7 +52,7 @@ export default function ChildrenScreen() {
 
   return (
     <Screen edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" bottomOffset={24}>
         <T variant="title">누가 성경 친구를 만날까요?</T>
 
         {children.map((child) => (
@@ -114,7 +115,7 @@ export default function ChildrenScreen() {
         ) : children.length < 6 ? (
           <Button label="+ 새 프로필 만들기" variant="secondary" onPress={() => setAdding(true)} />
         ) : null}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

@@ -4,14 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
+// Android is edge-to-edge (SDK 57), where RN's KeyboardAvoidingView does not
+// resize the window; keyboard-controller behaves the same on Android and iOS.
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { ChatBubble, TypingBubble } from '@/components/chat-bubble';
 import { Chip, EmptyState, Mascot, Screen, T } from '@/components/ui';
@@ -105,7 +106,7 @@ export default function ChatScreen() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         {messages.isPending ? (
           <View style={styles.center}>
             <ActivityIndicator color={colors.primary} />

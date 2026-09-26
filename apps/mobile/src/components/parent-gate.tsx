@@ -3,6 +3,7 @@
 // App Store Kids category and recommended by Google Play's Families policy.
 import { useMemo, useState } from 'react';
 import { Modal, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { colors, radius, space, type } from '@/theme';
 
@@ -42,7 +43,7 @@ export function ParentGate({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View style={styles.backdrop}>
+      <KeyboardAvoidingView behavior="padding" style={styles.backdrop}>
         <Card style={styles.card}>
           <T variant="title">보호자 확인</T>
           <T variant="small">이 공간은 보호자만 들어갈 수 있어요. 아래 문제의 답을 입력해 주세요.</T>
@@ -65,7 +66,7 @@ export function ParentGate({
             <Button label="확인" onPress={submit} style={styles.flex} disabled={!value} />
           </View>
         </Card>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

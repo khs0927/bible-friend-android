@@ -28,7 +28,8 @@
     "android:dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/android-dev.ps1",
     "functions:test": "deno test --config supabase/functions/deno.json supabase/functions/_shared/",
     "smoke:voice": "node scripts/smoke-voice.mjs",
-    "voice:smoke": "node services/voice-cpu/smoke.mjs"
+    "voice:smoke": "node services/voice-cpu/smoke.mjs",
+    "figma:export": "node scripts/figma-export.mjs"
   },
   "devDependencies": {
     "deno": "^2.9.6",

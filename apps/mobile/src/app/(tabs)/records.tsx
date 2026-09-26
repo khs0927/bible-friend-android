@@ -1,6 +1,7 @@
 import { TREASURE_CARDS, type PrayerVerse } from '@bible-friend/core';
 import { useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View, type ScrollViewProps } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 
 import { Button, Card, Chip, EmptyState, Loading, Screen, T } from '@/components/ui';
 import { api, toFriendlyMessage } from '@/lib/api';
@@ -77,6 +78,8 @@ function PrayerSection() {
     <FlatList
       data={notes.data ?? []}
       keyExtractor={(note) => note.id}
+      // The prayer input lives in the list header; keep it above the keyboard.
+      renderScrollComponent={(props: ScrollViewProps) => <KeyboardAwareScrollView {...props} bottomOffset={24} />}
       contentContainerStyle={styles.list}
       keyboardShouldPersistTaps="handled"
       ListHeaderComponent={
