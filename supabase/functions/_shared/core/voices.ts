@@ -5,7 +5,11 @@ export type Speaker = (typeof SPEAKERS)[number];
 export interface VoiceProfile {
   /** Gemini prebuilt voice name. */
   voice: string;
-  /** Natural-language delivery direction prepended to the text. */
+  /**
+   * Natural-language delivery direction. Only sent to engines with a separate
+   * instruction field (Qwen3-TTS `instructions`). Never prepend it to Gemini
+   * TTS text: Gemini 3.8 TTS then reads it aloud or improvises other speech.
+   */
   direction: string;
 }
 

@@ -50,6 +50,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Type-check Edge Functions
         run: pnpm functions:check
+      - name: Provider chain unit tests (Deno)
+        run: pnpm functions:test
       - name: Start local Supabase
         run: pnpm exec supabase start -x studio,imgproxy,vector,logflare,supavisor,mailpit,realtime
       - name: Database security tests (pgTAP)
@@ -67,3 +69,35 @@ jobs:
       - name: Functions log
         if: failure()
         run: cat functions.log
+
+  voice-cpu:
+    name: Open-source voice server (Supertonic 3 + faster-whisper)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: services/voice-cpu/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pip install -r services/voice-cpu/requirements.txt
+      - name: Start server (small Whisper model keeps CI fast)
+        working-directory: services/voice-cpu
+        env:
+          VOICE_API_KEY: ci-secret
+          WHISPER_MODEL: small
+          HF_HUB_DISABLE_SYMLINKS_WARNING: '1'
+        run: |
+          nohup uvicorn app:app --host 127.0.0.1 --port 8808 > server.log 2>&1 &
+          for i in $(seq 1 120); do curl -s http://127.0.0.1:8808/healthz | grep -q '"ok":true' && break; sleep 5; done
+      - name: Round-trip smoke test
+        run: |
+          mkdir -p supabase/functions && echo "VOICE_API_KEY=ci-secret" > supabase/functions/.env
+          node services/voice-cpu/smoke.mjs
+      - name: Server log
+        if: failure()
+        run: cat services/voice-cpu/server.log

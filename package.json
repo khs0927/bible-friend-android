@@ -13,7 +13,7 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "check": "pnpm sync:core --check && turbo run typecheck lint test",
+    "check": "pnpm sync:core --check && turbo run typecheck lint test && pnpm functions:test",
     "sync:core": "node scripts/sync-core.mjs",
     "db:start": "supabase start",
     "db:stop": "supabase stop",
@@ -25,7 +25,10 @@
     "smoke": "node scripts/smoke-local.mjs",
     "db:test": "supabase test db",
     "android:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/android-setup.ps1",
-    "android:dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/android-dev.ps1"
+    "android:dev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/android-dev.ps1",
+    "functions:test": "deno test --config supabase/functions/deno.json supabase/functions/_shared/",
+    "smoke:voice": "node scripts/smoke-voice.mjs",
+    "voice:smoke": "node services/voice-cpu/smoke.mjs"
   },
   "devDependencies": {
     "deno": "^2.9.6",

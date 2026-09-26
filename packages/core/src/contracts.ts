@@ -62,6 +62,8 @@ export interface ChatAskResponse {
   reply: string;
   flagged: boolean;
   growth: GrowthUpdate | null;
+  /** Which model answered (e.g. "gemini:gemini-flash-latest", "oss:qwen3:8b", "fallback"). */
+  provider?: string;
 }
 
 export interface ChatPrayerVerseResponse {
@@ -80,9 +82,17 @@ export const ttsRequestSchema = z.object({
 export type TtsRequest = z.input<typeof ttsRequestSchema>;
 
 export interface TtsResponse {
-  /** Short-lived signed URL of a cached WAV file. */
+  /** Short-lived signed URL of a cached WAV file (absolute, as seen by the server). */
   url: string;
+  /**
+   * The same URL relative to the Supabase origin ("/storage/v1/object/sign/…").
+   * Clients should prefer `${their Supabase URL}${path}`: inside local Docker the
+   * server's origin is an internal host (http://kong:8000) a device can't reach.
+   */
+  path: string;
   cached: boolean;
+  /** Which engine rendered the audio (e.g. "gemini:gemini-3.8-flash-tts", "oss:supertonic"). */
+  provider?: string;
 }
 
 // --- transcribe -------------------------------------------------------------
@@ -100,6 +110,7 @@ export type TranscribeRequest = z.infer<typeof transcribeRequestSchema>;
 
 export interface TranscribeResponse {
   text: string;
+  provider?: string;
 }
 
 // --- growth -----------------------------------------------------------------

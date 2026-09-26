@@ -11,6 +11,9 @@ import { useSyncExternalStore } from 'react';
 
 import { api } from './api';
 
+/** Audio URLs are joined with the app's own Supabase URL (see TtsResponse.path). */
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/+$/, '');
+
 type Listener = () => void;
 
 let speakingId: string | null = null;
@@ -100,7 +103,9 @@ export async function speak(text: string, options: { id: string; speaker?: Speak
   await ensureAudioMode();
 
   const fetchUrl = (chunk: string) =>
-    api.tts({ text: chunk, speaker: options.speaker ?? 'CHILD_FRIEND' }).then((result) => result.url);
+    api
+      .tts({ text: chunk, speaker: options.speaker ?? 'CHILD_FRIEND' })
+      .then((result) => (supabaseUrl ? `${supabaseUrl}${result.path}` : result.url));
 
   let serverVoice = true;
   let next: Promise<string> | null = fetchUrl(chunks[0]!);

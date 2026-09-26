@@ -18,10 +18,10 @@ import {
   type ChatAskResponse,
   type ChatPrayerVerseResponse,
 } from '../_shared/core/index.ts';
-import { generateJson, generateText, type ChatTurn } from '../_shared/gemini.ts';
 import { claimGrowth } from '../_shared/growth.ts';
 import { consumeQuota, requireChild, requireConsent, requireUserId } from '../_shared/guard.ts';
 import { handle, json, parseBody } from '../_shared/http.ts';
+import { llmChain, runChain, type ChatTurn } from '../_shared/providers/index.ts';
 
 const HISTORY_TURNS = 8;
 
@@ -46,21 +46,25 @@ export default {
         const screen = screenChildInput(body.message);
         let suggestion = FALLBACK_PRAYER_VERSE as ChatPrayerVerseResponse['suggestion'];
         if (screen.category === 'ok') {
-          const raw = await generateJson<unknown>({
-            system: PRAYER_VERSE_PROMPT,
-            prompt: `기도 내용: "${body.message}"`,
-            schema: {
-              type: 'OBJECT',
-              properties: {
-                verseRef: { type: 'STRING' },
-                verseText: { type: 'STRING' },
-                encouragement: { type: 'STRING' },
+          const raw = await runChain(llmChain(), async (provider) => {
+            const value = await provider.json({
+              system: PRAYER_VERSE_PROMPT,
+              prompt: `기도 내용: "${body.message}"`,
+              schema: {
+                type: 'OBJECT',
+                properties: {
+                  verseRef: { type: 'STRING' },
+                  verseText: { type: 'STRING' },
+                  encouragement: { type: 'STRING' },
+                },
+                required: ['verseRef', 'verseText', 'encouragement'],
               },
-              required: ['verseRef', 'verseText', 'encouragement'],
-            },
+            });
+            const parsed = prayerVerseSchema.safeParse(value);
+            if (!parsed.success) throw new Error(`${provider.id}: unusable suggestion`);
+            return parsed.data;
           }).catch(() => null);
-          const parsed = prayerVerseSchema.safeParse(raw);
-          if (parsed.success) suggestion = parsed.data;
+          if (raw) suggestion = raw.result;
         }
         const response: ChatPrayerVerseResponse = { mode: 'prayer_verse', suggestion };
         return json(response);
@@ -69,6 +73,7 @@ export default {
       // --- Conversation ----------------------------------------------------------
       const screen = screenChildInput(body.message);
       let reply: string;
+      let provider = 'safety-screen';
       let flagged = screen.category !== 'ok';
 
       if (screen.cannedReply) {
@@ -87,18 +92,18 @@ export default {
         turns.push({ role: 'user', text: body.message });
 
         const story = body.storyId ? getStory(body.storyId) : undefined;
+        const system = buildSystemPrompt({
+          ageBand: ageBand(child.birth_year),
+          storyContext: story ? storyContext(story) : undefined,
+        });
         try {
-          const result = await generateText({
-            system: buildSystemPrompt({
-              ageBand: ageBand(child.birth_year),
-              storyContext: story ? storyContext(story) : undefined,
-            }),
-            turns,
-          });
-          if (result.blocked) flagged = true;
-          reply = result.blocked || !result.text ? fallbackAnswer(body.message) : sanitizeReply(result.text);
+          const outcome = await runChain(llmChain(), (llm) => llm.chat({ system, turns }));
+          provider = outcome.provider.id;
+          if (outcome.result.blocked) flagged = true;
+          reply = outcome.result.blocked ? fallbackAnswer(body.message) : sanitizeReply(outcome.result.text);
         } catch (error) {
-          console.warn('[chat] model unavailable, using fallback', error);
+          console.warn('[chat] every model unavailable, using fallback', error);
+          provider = 'fallback';
           reply = fallbackAnswer(body.message);
         }
       }
@@ -121,7 +126,7 @@ export default {
         }
       }
 
-      const response: ChatAskResponse = { mode: 'ask', reply, flagged, growth };
+      const response: ChatAskResponse = { mode: 'ask', reply, flagged, growth, provider };
       return json(response);
     }),
   ),
