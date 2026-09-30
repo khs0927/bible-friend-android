@@ -1,0 +1,95 @@
+name: Android APK (Tauri)
+
+# Builds the Rust/Tauri Android app with the bible-friend-web client bundled in.
+# Optional repository variables: API_BASE_URL (server, default production) and
+# WEB_REF (web branch to bundle, default main).
+# If bible-friend-web is private, add a WEB_REPO_TOKEN secret with read access.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['rust/**', 'scripts/sync-web.mjs', 'scripts/tauri-android-patch.mjs', '.github/workflows/android-apk.yml']
+  push:
+    branches: [main]
+    paths: ['rust/**', 'scripts/sync-web.mjs', 'scripts/tauri-android-patch.mjs', '.github/workflows/android-apk.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      NDK_VERSION: 27.0.12077973
+      # Deployed bible-friend-web server; override with the API_BASE_URL variable.
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://bible-friend-web.vercel.app' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out bible-friend-web (UI source)
+        uses: actions/checkout@v4
+        with:
+          repository: khs0927/bible-friend-web
+          # Web branch to bundle (WEB_REF variable); main once the app changes land.
+          ref: ${{ vars.WEB_REF || 'main' }}
+          path: bible-friend-web
+          token: ${{ secrets.WEB_REPO_TOKEN || github.token }}
+
+      # pnpm version comes from package.json "packageManager".
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+        with:
+          # The default package list includes the removed "tools" package.
+          packages: platform-tools
+      - name: Install NDK
+        run: |
+          sdkmanager --install "ndk;${NDK_VERSION}"
+          echo "NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2" --locked
+
+      - name: Bundle the web client
+        run: |
+          if [ -z "$API_BASE_URL" ]; then
+            echo "::error::Set the repository variable API_BASE_URL (e.g. https://<app>.vercel.app)"
+            exit 1
+          fi
+          # Outside this repo's pnpm workspace, or pnpm installs the wrong package.
+          mv "$GITHUB_WORKSPACE/bible-friend-web" "$RUNNER_TEMP/bible-friend-web"
+          WEB_DIR="$RUNNER_TEMP/bible-friend-web" node scripts/sync-web.mjs
+
+      - name: Generate and patch the Android project
+        working-directory: rust/apps/bible-friend
+        run: |
+          [ -d gen/android ] || cargo tauri android init --ci
+          cargo tauri icon icons/app-icon.png
+          node ../../../scripts/tauri-android-patch.mjs
+
+      - name: Build APK (debug-signed, installable for testing)
+        working-directory: rust/apps/bible-friend
+        run: cargo tauri android build --apk --debug --ci
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bible-friend-apk
+          path: rust/apps/bible-friend/gen/android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error

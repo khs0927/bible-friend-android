@@ -1,0 +1,14 @@
+[package]
+name = "bf-core"
+description = "Bible Friend domain logic shared by the Android shell and servers"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+regex.workspace = true
+unicode-normalization.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

@@ -1,0 +1,21 @@
+[package]
+name = "bible-friend"
+description = "Bible Friend Android shell (Tauri 2) wrapping the bible-friend-web client"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+
+[lib]
+# staticlib/cdylib are what the Android (and iOS) builds link against.
+name = "bible_friend_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+bf-core = { path = "../../crates/bf-core" }
+tauri = { version = "2", features = [] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
