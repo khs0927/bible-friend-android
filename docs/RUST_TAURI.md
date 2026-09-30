@@ -70,18 +70,25 @@ pnpm rust:android:init    # gen/android 생성
 (cd ../bible-friend-web && pnpm dev)
 pnpm rust:android:dev     # 에뮬레이터/기기에서 웹 UI + Rust 명령 핫리로드
 
-pnpm rust:android:build   # 웹 빌드 동기화 → APK
+API_BASE_URL=https://<배포 주소> pnpm rust:android:build   # 웹 빌드 동기화 → APK
 ```
 
-## 5. 남은 작업 (다음 단계)
+## 5. 결정 사항 (2026-09-30)
 
-1. **API 주소(웹 저장소):** 웹 클라이언트가 `/api/trpc`, `/api/voice-tts-stream`을 상대 경로로 부릅니다.
-   번들된 앱(`tauri://localhost`)에서는 서버 주소가 필요하므로 `VITE_API_BASE_URL`을 도입하고,
-   서버에 Tauri origin CORS를 허용해야 합니다. 인증은 이미 `Authorization: Bearer` 경로가 있어 쿠키 없이 동작 가능합니다.
-   (개발 모드는 dev 서버를 그대로 쓰므로 수정 없이 동작)
-2. **백엔드 통합 결정:** 웹(Express+MySQL+Manus OAuth) vs Android(Supabase). 아동 보호 설계(동의·RLS·쿼터)가
-   있는 Supabase로 모으는 것을 권장합니다.
-3. **네이티브 기능:** 마이크 녹음(STT)·알림·오디오 포커스는 Tauri 플러그인(`tauri-plugin-notification` 등) 또는
-   `gen/android`의 Kotlin 플러그인으로 추가. Android WebView 마이크 권한은 `RECORD_AUDIO` 매니페스트 필요.
-4. **중복 제거:** 웹 서버 로직을 Rust로 옮길 경우 `bf-core`를 Axum 서버에서 재사용하고, TS 사본은 테스트 픽스처로 동기화 검증.
-5. 기존 Expo 앱(`apps/mobile`)은 Tauri 셸이 기능 동등해질 때까지 유지.
+- **백엔드는 `bible-friend-web` 서버(Express + tRPC, Vercel) 하나로 통일.** 앱은 웹 클라이언트와 같은 API를 씁니다.
+  Supabase를 택할 가장 큰 이유였던 보호자 동의 구조가 더 이상 필요 없고, 웹이 기능 기준이라 서버를 한 곳만 고치면 됩니다.
+- **보호자 동의 절차 제거.** 앱은 웹과 똑같이 동의 화면 없이 동작합니다. 아이 입력 안전 검사(`bf-core::safety`,
+  서버 쪽 검사)와 답변 정리는 그대로 유지합니다.
+- `apps/mobile`(Expo)과 `supabase/`는 **레거시**입니다. Tauri 앱이 실기기에서 검증되면 제거합니다.
+  (루트 `CLAUDE.md`의 `requireConsent` 등 규칙은 레거시 Edge Function에만 해당)
+- 웹 쪽 준비: khs0927/bible-friend-web#72 (`VITE_API_BASE_URL`, Tauri 출처 CORS)
+
+## 6. 남은 작업
+
+1. 웹 PR #72 머지 후 `API_BASE_URL=https://<배포 주소> pnpm rust:android:build`로 실기기 APK 확인.
+2. **로그인:** 웹의 Manus OAuth는 `window.location.origin`으로 콜백을 받아 앱 안에서는 동작하지 않습니다. 현재 API는
+   비로그인으로도 동작하므로 우선 비로그인으로 출시하고, 기록 동기화가 필요해지면 딥링크(`tauri-plugin-deep-link`) +
+   Bearer 토큰 방식으로 추가합니다.
+3. **네이티브 기능:** 마이크(`RECORD_AUDIO` 매니페스트 + WebView 권한 허용), 알림(`tauri-plugin-notification`).
+4. 웹 서버 로직(성장 계산·안전 검사)을 점진적으로 `bf-core`와 공유하려면, 서버를 Rust(Axum)로 옮기거나 `bf-core`를 WASM으로
+   빌드해 Node에서 호출하는 방법 중 선택합니다.
