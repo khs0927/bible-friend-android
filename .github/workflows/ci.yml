@@ -30,7 +30,8 @@ jobs:
       - name: Core unit tests
         run: pnpm --filter @bible-friend/core test
       - name: Mobile component tests (jest-expo)
-        run: pnpm --filter mobile test -- --ci
+        # pnpm 10 forwards a literal "--", which jest reads as a test-path pattern.
+        run: pnpm --filter mobile exec jest --ci
       - name: Typecheck
         run: pnpm typecheck
       - name: Lint

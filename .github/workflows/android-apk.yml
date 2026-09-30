@@ -1,7 +1,8 @@
 name: Android APK (Tauri)
 
 # Builds the Rust/Tauri Android app with the bible-friend-web client bundled in.
-# Needs the repository variable API_BASE_URL (deployed bible-friend-web server).
+# Optional repository variables: API_BASE_URL (server, default production) and
+# WEB_REF (web branch to bundle, default main).
 # If bible-friend-web is private, add a WEB_REPO_TOKEN secret with read access.
 
 on:
@@ -25,7 +26,8 @@ jobs:
     timeout-minutes: 60
     env:
       NDK_VERSION: 27.0.12077973
-      API_BASE_URL: ${{ vars.API_BASE_URL }}
+      # Deployed bible-friend-web server; override with the API_BASE_URL variable.
+      API_BASE_URL: ${{ vars.API_BASE_URL || 'https://bible-friend-web.vercel.app' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,12 +35,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: khs0927/bible-friend-web
+          # Web branch to bundle (WEB_REF variable); main once the app changes land.
+          ref: ${{ vars.WEB_REF || 'main' }}
           path: bible-friend-web
           token: ${{ secrets.WEB_REPO_TOKEN || github.token }}
 
+      # pnpm version comes from package.json "packageManager".
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
