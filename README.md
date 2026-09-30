@@ -39,6 +39,10 @@ pnpm android:dev     # Supabase → Edge Functions → 에뮬레이터 → 앱 �
 
 자세한 내용은 [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md)를 보세요. 개발 빌드의 로그인 화면에 있는 **개발용 로그인** 버튼을 쓰면 실제 카카오/구글 키 없이 바로 테스트할 수 있습니다.
 
+## Rust (Tauri 2) 셸 — 진행 중
+
+웹(`bible-friend-web`) UI를 그대로 쓰고 Rust로 도메인 로직·네이티브 기능을 담당하는 Android 셸이 `rust/`에 있습니다. [docs/RUST_TAURI.md](docs/RUST_TAURI.md) 참고.
+
 ## 검증
 
 ```bash

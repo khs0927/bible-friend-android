@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Core IPC for the main window. App commands are allowed by default; add plugin permissions here explicitly.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
