@@ -64,14 +64,28 @@ pnpm rust:check           # fmt + clippy(-D warnings), Tauri 셸 포함 (Linux�
 # 최초 1회: Android Studio SDK + NDK, JAVA_HOME, ANDROID_HOME, NDK_HOME 설정 후
 cargo install tauri-cli --version "^2" --locked
 rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
-pnpm rust:android:init    # gen/android 생성
+pnpm rust:android:init    # gen/android 생성 + 아이콘 + 권한/앱 이름 패치(scripts/tauri-android-patch.mjs)
 
 # 개발: 웹 dev 서버(포트 3000)를 띄운 상태에서
 (cd ../bible-friend-web && pnpm dev)
 pnpm rust:android:dev     # 에뮬레이터/기기에서 웹 UI + Rust 명령 핫리로드
 
-API_BASE_URL=https://<배포 주소> pnpm rust:android:build   # 웹 빌드 동기화 → APK
+API_BASE_URL=https://<배포 주소> pnpm rust:android:build   # 웹 빌드 동기화 → 테스트용 APK(debug 서명)
 ```
+
+실기기 개발: `pnpm rust:android:dev`는 에뮬레이터에서는 `localhost:3000`을 그대로 씁니다.
+USB로 연결한 실제 기기는 PC와 같은 Wi-Fi에서 `cargo tauri android dev --host`로 실행합니다.
+
+### CI로 APK 받기
+
+`.github/workflows/android-apk.yml`이 GitHub Actions에서 APK를 만들어 `bible-friend-apk` 아티팩트로 올립니다
+(ubuntu 러너에 Android SDK가 있어 로컬 설치가 필요 없음).
+
+1. 저장소 **Settings → Secrets and variables → Actions → Variables**에 `API_BASE_URL`(예: `https://<앱>.vercel.app`) 추가
+2. `bible-friend-web`이 비공개라면 **Secrets**에 읽기 권한 토큰 `WEB_REPO_TOKEN` 추가
+3. Actions 탭 → *Android APK (Tauri)* → *Run workflow*, 끝나면 아티팩트의 APK를 기기에 설치
+
+앱 아이콘은 웹의 `bible-friend-mascot.svg`로 만든 `icons/app-icon.png`에서 생성됩니다.
 
 ## 5. 결정 사항 (2026-09-30)
 

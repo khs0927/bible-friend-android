@@ -33,9 +33,9 @@
     "rust:test": "cargo test --manifest-path rust/Cargo.toml",
     "rust:check": "cargo fmt --manifest-path rust/Cargo.toml --all --check && cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings",
     "rust:sync-web": "node scripts/sync-web.mjs",
-    "rust:android:init": "cd rust/apps/bible-friend && cargo tauri android init",
+    "rust:android:init": "cd rust/apps/bible-friend && cargo tauri android init && cargo tauri icon icons/app-icon.png && node ../../../scripts/tauri-android-patch.mjs",
     "rust:android:dev": "cd rust/apps/bible-friend && cargo tauri android dev",
-    "rust:android:build": "node scripts/sync-web.mjs && cd rust/apps/bible-friend && cargo tauri android build --apk"
+    "rust:android:build": "node scripts/sync-web.mjs && cd rust/apps/bible-friend && cargo tauri android build --apk --debug"
   },
   "devDependencies": {
     "deno": "^2.9.6",
