@@ -73,7 +73,9 @@ jobs:
             echo "::error::Set the repository variable API_BASE_URL (e.g. https://<app>.vercel.app)"
             exit 1
           fi
-          WEB_DIR="$GITHUB_WORKSPACE/bible-friend-web" node scripts/sync-web.mjs
+          # Outside this repo's pnpm workspace, or pnpm installs the wrong package.
+          mv "$GITHUB_WORKSPACE/bible-friend-web" "$RUNNER_TEMP/bible-friend-web"
+          WEB_DIR="$RUNNER_TEMP/bible-friend-web" node scripts/sync-web.mjs
 
       - name: Generate and patch the Android project
         working-directory: rust/apps/bible-friend
