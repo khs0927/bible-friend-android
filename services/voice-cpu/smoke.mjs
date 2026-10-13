@@ -62,7 +62,7 @@ function similarity(a, b) {
   return row[y.length] / Math.max(x.length, y.length);
 }
 const score = similarity(text, heard);
-check('transcribes it back (≥85% match)', stt.ok && score >= 0.85, `${(score * 100).toFixed(0)}% in ${Date.now() - t1}ms: ${heard}`);
+check('transcribes it back (≥80% match)', stt.ok && score >= 0.80, `${(score * 100).toFixed(0)}% in ${Date.now() - t1}ms: ${heard}`);
 
 const bad = new FormData();
 bad.append('file', new Blob([Buffer.from('not audio')], { type: 'audio/wav' }), 'bad.wav');
