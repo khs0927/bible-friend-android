@@ -190,7 +190,7 @@ async def transcriptions(
 
             text = await asyncio.to_thread(run)
     except Exception as error:  # undecodable / corrupt audio
-        if type(error).__module__.startswith("av"):
+        if isinstance(error, (ValueError, EOFError)) or type(error).__module__.startswith("av"):
             raise HTTPException(status_code=400, detail="unsupported or corrupt audio") from error
         raise
     finally:
