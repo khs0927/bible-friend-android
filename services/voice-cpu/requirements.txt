@@ -1,6 +1,8 @@
 # Pinned, tested versions (2026-09-26)
 supertonic==1.3.1
 faster-whisper==1.2.1
+# PyAV 19 removed av.open(metadata_errors=...), which faster-whisper 1.2.1 still passes
+av==18.1.0
 onnxruntime==1.30.0
 ctranslate2==4.8.2
 numpy==2.5.3
