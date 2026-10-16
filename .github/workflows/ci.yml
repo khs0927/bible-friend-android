@@ -87,15 +87,15 @@ jobs:
         with:
           node-version: 22
       - run: pip install -r services/voice-cpu/requirements.txt
-      - name: Start server (small Whisper model keeps CI fast)
+      - name: Start server (production Whisper model large-v3-turbo)
         working-directory: services/voice-cpu
         env:
           VOICE_API_KEY: ci-secret
-          WHISPER_MODEL: small
+          WHISPER_MODEL: large-v3-turbo
           HF_HUB_DISABLE_SYMLINKS_WARNING: '1'
         run: |
           nohup uvicorn app:app --host 127.0.0.1 --port 8808 > server.log 2>&1 &
-          for i in $(seq 1 120); do curl -s http://127.0.0.1:8808/healthz | grep -q '"ok":true' && break; sleep 5; done
+          for i in $(seq 1 180); do curl -s http://127.0.0.1:8808/healthz | grep -q '"ok":true' && break; sleep 5; done
       - name: Round-trip smoke test
         run: |
           mkdir -p supabase/functions && echo "VOICE_API_KEY=ci-secret" > supabase/functions/.env
