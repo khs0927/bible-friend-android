@@ -30,7 +30,9 @@ jobs:
       - name: Core unit tests
         run: pnpm --filter @bible-friend/core test
       - name: Mobile component tests (jest-expo)
-        run: pnpm --filter mobile test -- --ci
+        # `pnpm test -- --ci` forwards a literal `--`, so jest received "--ci"
+        # as a path pattern, matched no tests, and exited 1. Run jest directly.
+        run: pnpm --filter mobile exec jest --ci
       - name: Typecheck
         run: pnpm typecheck
       - name: Lint
